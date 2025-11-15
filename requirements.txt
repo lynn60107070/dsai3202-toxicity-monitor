@@ -1,0 +1,12 @@
+pandas
+numpy
+matplotlib
+seaborn
+textblob
+vaderSentiment
+transformers
+torch
+azure-storage-file-datalake
+detoxify
+scikit-learn
+ipykernel
