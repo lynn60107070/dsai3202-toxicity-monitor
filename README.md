@@ -102,14 +102,14 @@ They had datasets from:
 - Bluesky  
 - and some other platform that felt like a social network from the multiverse  
 
-So from their massive chaotic archive, we picked a few communities:
+So from their massive chaotic archive, we picked a few communities from reddit:
 - **r/cringe**  
 - **r/greatawakening**  
 - **r/mensrights**  
 *(Fun fact: the fat people subreddit dataset got corrupted. Probably a sign from the universe.)*
 
 Process:
-- Created **Storage Account**, **Lakehouse**, and **raw/silver/gold** folders (just like the labs).
+- Created **Storage Account** `toxicitylake7032` (last 2 digits of both of our ID's), **Lakehouse**, and **raw/silver/gold** folders (just like the labs).
 - Used **Azure Machine Learning** to run `wget` + `azcopy` to haul the data from the MADOC site to our Lakehouse.
 - Dropped the untouched parquet files into **bronze/reddit/**.
 
@@ -152,24 +152,34 @@ In our Databricks notebook (yes, the one that slowly consumed our sanity), we:
 Gold outputs stored under:  
 **gold/reddit_features/**
 
-### Final Dataset Schema
 ### Final Dataset Schema  
 
 Our final cleaned dataset includes:
 
-| Feature | Description |
+| Column | Description |
 |--------|-------------|
-| `comment_id` | Unique ID of the comment |
-| `platform` | Always Reddit for Phase 1 |
-| `subreddit` | Source community |
-| `timestamp` | When the chaos was posted |
-| `clean_text` | Sanitized comment text |
-| `toxicity_score` | Provided by MADOC's existing model |
-| `sentiment_score` | Already included in source metadata |
-| `comment_length` | Hand-engineered feature |
-| `num_capital_letters` | Because YELLING = Suspicious |
-| `num_punctuation` | Emotional instability counter |
-| other metadata… | because Reddit loves metadata |
+| `post_id` | Unique ID of the post |
+| `user_id` | Who unleashed the content into the world |
+| `parent_id` | ID of the parent post/comment in the thread |
+| `parent_user_id` | The human (or bot?) behind the parent content |
+| `platform` | Always Reddit |
+| `community` | Source community |
+| `interaction_type` | Was it a post? A comment? A reaction? Reddit has layers |
+| `publish_ts` | Exact timestamp when the chaos went live |
+| `publish_date_only` | Same timestamp, but date only |
+| `content` | The raw, unfiltered Reddit text |
+| `url` | Where this blessed content originally lived |
+| `sentiment_vader` | VADER sentiment score (robot feelings detector #1) |
+| `sentiment_textblob` | TextBlob sentiment score (robot feelings detector #2) |
+| `subjectivity_textblob` | How opinionated the content is (according to TextBlob) |
+| `toxicity_toxigen` | Toxicity score from the ToxiGen model |
+| `strict_filter` | Whether this content trips the “uh oh” filter |
+| `content_length_chars` | Hand-engineered length feature (characters) |
+| `content_length_words` | Hand-engineered length feature (words) |
+| `toxicity_label` | Final toxicity classification |
+| `sentiment_bucket` | Sentiment grouped into friendly buckets |
+| `risk_level` | How spicy/dangerous the content is (according to your pipeline) |
+
 
 ### Power BI Dashboard
 For visualization:
