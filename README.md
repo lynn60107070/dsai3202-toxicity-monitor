@@ -183,7 +183,7 @@ For visualization:
 
 It's basically **Google Analytics for Drama™.**
 
-![dashboard](./img/Reddit EDA Dashboard.png)
+![dashboard](./img/reddit_eda_dashboard.png)
 
 Power BI be like:  
 "Your subreddit is 63% more toxic this week ✨. Maybe log off."
