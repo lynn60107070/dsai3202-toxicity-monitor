@@ -15,7 +15,7 @@ So we built a system to detect toxicity in real-time.
 
 **Dataset:** "User123 said: *you absolute waste of oxygen—*"  
 **Us:**  
-![dog](./pics/dawg.jpg)
+![dog](./img/dawg.jpg)
 
 
 This project builds an end-to-end cloud analytics pipeline that ingests Reddit community data, cleans and transforms it inside an Azure Lakehouse, engineers advanced NLP features, and visualizes toxicity trends using Power BI.
@@ -116,7 +116,7 @@ Process:
 Essentially, the Bronze layer is:
 
 **Bronze layer be like:**  
-![dumpster-fire](./pics/dump.gif)
+![dumpster-fire](./img/dump.gif)
 
 
 #### II. Silver Layer
@@ -183,6 +183,8 @@ For visualization:
 
 It's basically **Google Analytics for Drama™.**
 
+![dashboard](./img/Reddit EDA Dashboard.jpg)
+
 Power BI be like:  
 "Your subreddit is 63% more toxic this week ✨. Maybe log off."
 
@@ -214,5 +216,5 @@ Phase 2 will bring:
 - Alerting when users are *extra* feral  
 - Possibly a built-in "bro seek therapy" classifier
 
-![bravo](./pics/clap.gif)
-![bravo](./pics/clap2.gif)
+![bravo](./img/clap.gif)
+![bravo](./img/clap2.gif)
