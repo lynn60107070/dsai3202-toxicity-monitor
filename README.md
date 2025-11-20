@@ -7,9 +7,10 @@ People online post:
 - insults  
 - threats  
 - questionable opinions like "mint choco chip ice cream is good"
+
 This creates unsafe environments and forces moderators to experience **rapid aging buffs**.
 
-So we built a system to detect toxicity in real-time.
+So we're gonna built a system to detect toxicity in real-time.
 
 ### Basically us, reading the dataset:
 
@@ -18,31 +19,31 @@ So we built a system to detect toxicity in real-time.
 ![dog](./img/dawg.jpg)
 
 
-This project builds an end-to-end cloud analytics pipeline that ingests Reddit community data, cleans and transforms it inside an Azure Lakehouse, engineers advanced NLP features, and visualizes toxicity trends using Power BI.
+This project builds an end-to-end cloud analytics pipeline that ingests Reddit community data, cleans and transforms it inside an Azure Lakehouse, engineers features, and visualizes toxicity trends using Power BI.
 
 The goal is to measure community toxicity, sentiment behaviour, and interaction risks using modern text analytics techniques and scalable cloud infrastructure, while Reddit invents new slang every 3 business days.
-*(A.K.A: We built a robot that reads comments so we don't have to. Because mental health.)*
+*(A.K.A: We built a robot that reads comments so we don't have to. Because mental health.(Phase 2))*
 
 
 The pipeline uses:
 - Azure Data Lake Gen2 (Bronze → Silver → Gold)
 - Azure Databricks (PySpark) for transformations
-- ML-based text feature engineering
+- Text feature engineering
 - Power BI for dashboards and exploratory analysis
 
 ---
 
-# Reddit API Access  
-We use **PRAW**.  
+# Reddit API Access (InshaAllah Phase 2)
+We use **PRAW**. (This will be used in Phase 2)
+
 PRAW is like:
 
 > "Reddit, can we please have… one (1) comment? Please? Gently?"
 
 Reddit free tier lets us send **100 requests/min**, which works perfectly because:
-
 - we're students  
 - our budget is please 
-- and we are NOT paying for API calls when we can barely pay for lunch
+- and we are NOT paying for API calls when we can barely pay for lunch 
 
 ---
 
@@ -96,16 +97,17 @@ also known as:
 The Bronze layer is where **raw, unfiltered, fully-feral data goes to chill**.
 
 Source of data?
-Remember that dataset paper website from the proposal the MADOC project?  
+
+Remember that dataset paper website from the proposal, the MADOC project?  
 They had datasets from:
 - Reddit  
 - Bluesky  
 - and some other platform that felt like a social network from the multiverse  
 
 So from their massive chaotic archive, we picked a few communities from reddit:
-- **r/cringe**  
+- **r/CringeAnarchy**  
 - **r/greatawakening**  
-- **r/mensrights**  
+- **r/MensRights**  
 *(Fun fact: the fat people subreddit dataset got corrupted. Probably a sign from the universe.)*
 
 Process:
@@ -130,7 +132,7 @@ Using **Azure Data Factory**, we:
 - created a pipeline  
 - moved each subreddit parquet into **silver/reddit/**  
 - merged them into one unified Reddit folder  
-- performed basic structural normalization  
+
 
 Silver layer = Bronze, but after drinking water and going to therapy.
 
@@ -141,16 +143,19 @@ Welcome to the **Gold Layer**, where the dataset hits its personal villain arc.
 In our Databricks notebook (yes, the one that slowly consumed our sanity), we:
 - loaded the clean Silver data  
 - added some simple but useful features like:
-  - `comment_length`
-  - `num_capital_letters`
-  - `num_punctuation`
+  - `content_length_words`
+  - `toxicity_label`
+  - `risk_level`
   - anything else that screams "this comment might be toxic"  
 - didn't bother with SBERT embeddings because:
   - MADOC already comes with toxicity + sentiment labels  
   - and we're not trying to melt our Azure credits
 
+We took the cleaned Silver data and engineered a set of features that make the dataset more useful for analysis and modeling. We filtered and standardized key columns, then created text-based features like total character count and word count to capture how long each piece of content is. We also generated a toxicity label by turning the toxicity score into a simple 0/1 indicator. On top of that, we built sentiment buckets (positive, neutral, negative) from the sentiment score, and created a risk-level feature that classifies each item as low, medium, or high risk based on toxicity, flags, and other strict-filtering rules. Altogether, we enriched the original Silver data and shaped it into a structured Gold dataset that’s ready for machine learning, reporting, or any downstream analysis.
+
 Gold outputs stored under:  
-**gold/reddit_features/**
+**gold/reddit_features/*
+
 
 ### Final Dataset Schema  
 
@@ -177,13 +182,13 @@ Our final cleaned dataset includes:
 | `content_length_chars` | Hand-engineered length feature (characters) |
 | `content_length_words` | Hand-engineered length feature (words) |
 | `toxicity_label` | Final toxicity classification |
-| `sentiment_bucket` | Sentiment grouped into friendly buckets |
-| `risk_level` | How spicy/dangerous the content is (according to your pipeline) |
+| `sentiment_bucket` | Sentiment grouped into buckets |
+| `risk_level` | How ragebait-y the content is |
 
 
 ### Power BI Dashboard
 For visualization:
-- Connected Power BI Desktop directly to Azure (Data Lake storage).  
+- Connected Power BI Desktop directly to Azure (Data Lake storage). (this took a while) 
 - Loaded the dataset from **gold/reddit_features/**.  
 - Built dashboards showing:
   - toxicity levels  
@@ -192,6 +197,8 @@ For visualization:
   - comment behavior trends  
 
 It's basically **Google Analytics for Drama™.**
+
+Heres a screenshot of our dashboard. Wanted to add a link but kept crashing when we tried to publish. Lawd have mercy.
 
 ![dashboard](./img/reddit_eda_dashboard.png)
 
@@ -206,6 +213,7 @@ We encountered many bosses in this RPG adventure, including:
 - Corrupted subreddit file (RIP to the fat people dataset 🕊️)  
 - Data Factory pipelines running only when properly bribed  
 - Spark notebooks that said "Im gonna stop you right there…"
+- Connecting the Azure Blob Storage to Power BI took 47 business years
 - Subreddits that emotionally damaged us during EDA  
 - The moment we realized some comments should stay unread forever  
 
@@ -222,8 +230,7 @@ We laughed, we cried, we begged Azure to stop charging us.
 
 Phase 2 will bring:
 - Real-time ingestion (pray for us)  
-- Live streaming dashboards  
-- Alerting when users are *extra* feral  
+- Live streaming dashboards (inshaAllah) 
 - Possibly a built-in "bro seek therapy" classifier
 
 ![bravo](./img/clap.gif)
