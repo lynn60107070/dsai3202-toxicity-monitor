@@ -249,6 +249,161 @@ This phase demonstrates how the same cloud architecture from Phase 1 can evolve 
 
 In Phase 2, we replaced the inaccessible Reddit API with Bluesky's atproto API, which provides free access to live social content.
 
+Why Bluesky instead of Reddit?
+
+Reddit’s API used to be the go-to option for academic and student projects, but after their 2023 API policy overhaul, most streaming endpoints became restricted, rate-limited, or locked behind paid tiers. The PRAW (Python Reddit API Wrapper) library still works, but only in very low-volume and non-real-time scenarios. For our use case — continuously ingesting fresh comments for live toxicity scoring — Reddit’s API no longer offers a reliable, free streaming mechanism.
+
+Meanwhile, Bluesky offers an open, developer-friendly API with:
+
+✅ Free access for small educational projects
+
+✅ A clean, modern authentication flow
+
+✅ The ability to fetch fresh posts and replies from a user’s feed
+
+✅ Lightweight JSON responses (perfect for cloud ingestion)
+
+✅ No complicated rate-limit policies for simple ingestion loops
+
+So instead of fighting the Reddit API boss on hard mode, we switched to the API that actually wants us to succeed. Bluesky gives us real, fresh social media content — which is all we need for Phase 2.
+
+This section explains how the model was built, what features were used, and how well the classifier performed.
+
+🤖 1. Why Train on Reddit?
+
+The MADOC Reddit dataset provides:
+
+large-scale comment data
+
+built-in toxicity & sentiment labels
+
+high diversity of communities
+
+a wide range of writing styles and toxicity levels
+
+This makes it ideal for training a toxicity detection model that generalizes well to other platforms — including the live Bluesky posts used in this phase.
+
+🧱 2. Features Used for Model Training
+
+From the Reddit Gold dataset, we selected the following features:
+
+📝 Text feature
+
+content (the raw text itself)
+
+This is transformed using TF-IDF (TfidfVectorizer):
+
+unigrams
+
+max 20,000 features
+
+English stopwords removed
+
+🔢 Numeric features
+
+content_length_words
+
+content_length_chars
+
+sentiment_vader
+
+sentiment_textblob
+
+subjectivity_textblob
+
+These features help the model capture patterns beyond words alone — such as emotional tone, subjectivity, and text length.
+
+🧩 3. Model Choice: Logistic Regression
+
+We used Logistic Regression with:
+
+max_iter=2000
+
+balanced-ish dataset
+
+scikit-learn pipeline (ColumnTransformer + StandardScaler + TF-IDF)
+
+Why Logistic Regression?
+
+Logistic Regression is:
+
+fast
+
+stable
+
+robust to noisy text
+
+interpretable
+
+good as a first model for text classification
+
+It’s widely used in industry as a strong baseline for toxicity, sentiment analysis, and moderation systems — especially before moving to deep learning models like BERT or SBERT.
+
+🧪 4. Train/Test Split & Evaluation
+
+We used:
+
+80% training
+
+20% testing
+
+stratified split (keeps class imbalance consistent)
+
+After training, we evaluated the model on the held-out test set.
+
+📊 Final Model Metrics
+=== Evaluation on Test Set ===
+Accuracy : 0.7922801608816599
+F1       : 0.42406229274643215
+Precision: 0.6607066315596105
+Recall   : 0.3122309756856277
+ROC AUC  : 0.7730654979253081
+
+🧾 Classification Report
+Class	Precision	Recall	F1	Notes
+0 (non-toxic)	0.81	0.95	0.87	Very strong performance
+1 (toxic)	0.66	0.31	0.42	Catches ~31% of toxic posts
+
+Overall:
+
+Accuracy: 0.79
+
+Macro F1: ~0.65
+
+ROC AUC: 0.77
+
+🔍 5. Interpretation of These Metrics
+✔ Strengths
+
+Detects non-toxic comments extremely well
+
+Reasonably good precision for toxic comments
+→ When it predicts “toxic,” it’s usually right
+
+Solid ROC AUC of 0.77
+→ Better than random, clear separation between classes
+
+⚠ Weakness
+
+Recall for toxic posts is low (0.31)
+→ The model misses some toxic content
+
+This is expected because:
+
+Toxicity is rare compared to non-toxic content
+
+Logistic Regression is linear (limited expressiveness)
+
+Reddit comments vary wildly in style
+
+Despite this, the model is good enough for a Phase 2 academic project, especially since:
+
+It generalizes well to unseen Bluesky text
+
+It runs extremely fast
+
+It integrates cleanly with Databricks + MLflow
+
 🔐 Authentication
 
 We securely authenticate using Databricks Secrets:
