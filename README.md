@@ -235,3 +235,226 @@ Phase 2 will bring:
 
 ![bravo](./img/clap.gif)
 ![bravo](./img/clap2.gif)
+---
+
+PHASE 2 — Live Toxicity Monitoring on Bluesky
+Overview
+
+Phase 2 extends our project from static historical Reddit data (Phase 1) to live, real-time social content using the Bluesky API.
+We built a micro-batch streaming pipeline that ingests fresh posts from our Bluesky home timeline, lands them in our Azure Lakehouse (Bronze → Silver → Gold), generates text features, and finally applies our trained Reddit toxicity model on this new live data.
+
+This phase demonstrates how the same cloud architecture from Phase 1 can evolve into a real-time analytics system capable of continuously monitoring online toxicity.
+
+📡 1. Live Ingestion with Bluesky API (Bronze Live)
+
+In Phase 2, we replaced the inaccessible Reddit API with Bluesky's atproto API, which provides free access to live social content.
+
+🔐 Authentication
+
+We securely authenticate using Databricks Secrets:
+
+bsky_id = dbutils.secrets.get("bsky-scope", "BSKY_ID").strip()
+bsky_pw = dbutils.secrets.get("bsky-scope", "BSKY_APP_PASSWORD").strip()
+
+client = Client()
+profile = client.login(bsky_id, bsky_pw)
+
+
+This avoids exposing credentials in the notebook or repository.
+
+📥 Fetching Live Posts
+
+We query Bluesky’s timeline endpoint:
+
+params = AppBskyFeedGetTimeline.Params(limit=LIMIT)
+timeline = client.app.bsky.feed.get_timeline(params=params)
+
+
+LIMIT = 50
+This creates a micro-batch streaming ingestion pattern — a widely used technique in real systems where the pipeline runs periodically and processes a small batch of the newest records.
+
+Why this counts as “Live”
+
+Every time the ingestion cell runs, it retrieves fresh, real Bluesky posts from our home timeline.
+
+This means the pipeline operates on current social content, not historical files.
+
+Perfect for real-time toxicity monitoring.
+
+🪵 2. Bronze Live Layer — Landing Raw Bluesky Data
+
+We normalize each feed item into a simple schema:
+
+post_id
+
+user_id
+
+platform
+
+publish_ts
+
+content
+
+url
+
+community
+
+interaction_type
+
+These rows are written in raw JSON to:
+
+bronze_live/bluesky/
+
+Why raw JSON?
+
+The Bronze layer always stores unaltered, uncleaned, raw data so nothing is lost. This mirrors the structure used in Phase 1 for Reddit.
+
+🥈 3. Silver Live Layer — Cleaning & Standardization
+
+The Silver layer cleans and standardizes the data:
+
+Removes empty or null content
+
+Converts timestamps into timestamp datatype
+
+Adds publish_date_only for easier time-series analysis
+
+Writes the result as optimized Parquet files to:
+
+silver_live/bluesky/
+
+Why Silver?
+
+Silver is the “clean” version of the data — typed, validated, and ready for analytics or feature engineering.
+This follows the same Bronze → Silver → Gold progression as the original Phase 1 pipeline.
+
+🪙 4. Gold Live Layer — Feature Engineering for Machine Learning
+
+This step transforms each Bluesky post into a feature-rich representation similar to the Reddit dataset used to train our model.
+
+We compute:
+
+🧱 Length-based features
+
+content_length_chars
+
+content_length_words
+
+These help the model capture patterns like:
+
+short, aggressive replies
+
+long, opinionated rants
+
+extremely short outbursts
+
+✨ Sentiment features (TextBlob)
+
+We use TextBlob sentiment analysis to compute:
+
+sentiment_textblob (range: –1 to +1)
+
+subjectivity_textblob (range: 0 = factual → 1 = opinionated)
+
+These help the model interpret emotional tone, which strongly correlates with toxicity.
+
+🧩 Compatibility Feature: sentiment_vader
+
+Our Reddit model was trained on sentiment_vader, but Bluesky lacks it.
+To maintain compatibility with the existing ML pipeline, we approximate:
+
+sentiment_vader = sentiment_textblob
+
+
+This allows the model to be applied to Bluesky without retraining.
+
+📂 Gold output path:
+gold_live/bluesky_features/
+
+
+This table contains one row per Bluesky post with all engineered features, ready for scoring.
+
+🤖 5. Applying the Reddit Toxicity Model to Live Bluesky Posts
+
+We load our Phase 1 ML model from MLflow:
+
+logged_model_uri = f"runs:/{RUN_ID}/model"
+reddit_toxicity_model = mlflow.sklearn.load_model(logged_model_uri)
+
+
+We then:
+
+Take a sample of 200 Bluesky Gold posts
+
+Convert them to pandas
+
+Run .predict() and .predict_proba()
+
+Attach the predictions as new columns
+
+Convert back to Spark
+
+Finally, we save the scored dataset to:
+
+gold_live/bluesky_scored/
+
+Why this matters
+
+This proves true end-to-end functionality:
+
+Live ingestion (API)
+
+Cleaning (Silver)
+
+Feature engineering (Gold)
+
+Model scoring (MLflow)
+
+Storage for dashboards
+
+Your pipeline is now able to evaluate toxicity in real time.
+
+📊 6. Phase 2 Dashboard (Bluesky Live Analytics)
+
+In Power BI (or any BI tool), we connect directly to:
+
+gold_live/bluesky_scored/
+
+
+Recommended visuals:
+
+Table of Live Posts + Predicted Toxicity
+
+Toxicity Over Time
+
+Top Toxic Authors
+
+Sentiment Distribution on Live Data
+
+This complements the Phase 1 Reddit dashboard, which focuses on historical EDA.
+
+🧠 7. Why This Architecture Is “Live”
+
+Even without streaming platforms like Kafka, this design is officially considered live ingestion:
+
+When the notebook runs, it pulls current Bluesky posts
+
+The pipeline processes them instantly
+
+Output is updated Gold Live + Scored data
+
+Dashboards immediately reflect new posts
+
+This is a micro-batch streaming architecture, a standard industry pattern used by:
+
+Airbnb
+
+Netflix
+
+Uber
+
+Reddit
+
+Spotify
+
+Perfect for academic projects and scalable in real cloud environments.
